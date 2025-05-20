@@ -58,6 +58,5 @@ public:
 //--------------------------------------------------
 int main(){ ModelRegistry reg; reg.load("h.json"); reg.load("cx.json"); reg.load("rx.json");
     QuantumCircuit qc(2,reg);
-    qc.addModel("H",{0}); auto r=qc.repeat(3); r->kids.push_back(new Node{Node::MODEL,"CX",{0,1}});
-    //qc.addModel("H",{0}); auto r=qc.repeat(3); r->kids.push_back(new Node{Node::MODEL, Node::MODEL, "CX", {0,1}});
+    qc.addModel("H",{0}); auto r=qc.repeat(3); r->kids.push_back(new Node{Node::MODEL, Node::MODEL, "CX", {0,1}});
     qc.build(); qc.draw(); }
