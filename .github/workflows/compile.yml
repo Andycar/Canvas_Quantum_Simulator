@@ -42,7 +42,7 @@ jobs:
     
     - name: compile
       run: |
-        cl src\*.cpp /O2 /GL /EHsc /std:c++17 /I ${{ env.SZ_SFML_ROOT }}/include/ /link /OUT:bin\main.exe /OPT:REF /OPT:ICF /LTCG /INCREMENTAL:NO /DYNAMICBASE /LIBPATH:${{ env.SZ_SFML_ROOT }}/lib sfml-window.lib sfml-graphics.lib sfml-system.lib
+        cl src\*.cpp /O2 /GL /EHsc /std:c++17 /I include/ /link /OUT:bin\main.exe /OPT:REF /OPT:ICF /LTCG /INCREMENTAL:NO /DYNAMICBASE 
     
     # - name: Copy DLLs
     #   shell: cmd
