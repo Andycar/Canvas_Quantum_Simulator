@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Debug files generated
+*.pdb
+
 # Compiled Object files
 *.slo
 *.lo
