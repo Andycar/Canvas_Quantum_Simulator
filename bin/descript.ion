@@ -1,0 +1,3 @@
+h.json h.json: Hadamard gate definition \n{\n  "name": "H",  // or "CX" or "RX"\n  "arity": 1,   // 1 for H/RX, 2 for CX \n  "matrix": [   // Complex matrix elements as [[real,imag],...]\n    [[1.0, 0.0], [1.0, 0.0]],\n    [[1.0, 0.0], [-1.0, 0.0]]\n  ],\n  "style": "H",  // Display label\n  "param": "theta" // Optional, for RX gate\n}\nÂ
+cx.json cx.json: CNOT (Controlled-X) gate definition\nÂ
+rx.json rx.json: Parameterized rotation around X-axis gate definition

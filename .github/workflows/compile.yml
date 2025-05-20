@@ -1,0 +1,73 @@
+name: build (Windows/MSVC + SFML)
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+
+env:
+  SZ_SFML_ROOT: tmp/SFML
+  _SFML_PACK_NAME: windows-vc17-64.zip
+  _SFML_DOWNLOAD_PACK: https://artifacts.sfml-dev.org/by-branch/master/windows-vc17-64.zip
+  # NOTE: pkg. layout: ./<commit-hash>/[lib|include|...]
+  _SFML_DOWNLOAD_DIR: tmp
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  #BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+
+    - name: Checkout...
+      uses: actions/checkout@v3
+
+    - name: Setup MSVC/CLI dev. env.
+      uses: ilammy/msvc-dev-cmd@v1.13.0
+
+    - name: Setup SFML...
+      shell: cmd
+      run: tooling/sfml_dl+unzip
+
+    # - name: test env
+    #   run: echo "${{ env.SZ_SFML_ROOT }}"
+    
+    - name: compile
+      run: |
+        cl src\*.cpp /O2 /GL /EHsc /std:c++17 /I ${{ env.SZ_SFML_ROOT }}/include/ /link /OUT:bin\main.exe /OPT:REF /OPT:ICF /LTCG /INCREMENTAL:NO /DYNAMICBASE /LIBPATH:${{ env.SZ_SFML_ROOT }}/lib sfml-window.lib sfml-graphics.lib sfml-system.lib
+    
+    - name: Copy DLLs
+      shell: cmd
+      run: |
+        mkdir bin 2>NUL
+        copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-graphics-3.dll" bin\
+        copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-window-3.dll" bin\
+        copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-system-3.dll" bin\
+
+    - name: Upload main.exe as an artifact
+      uses: actions/upload-artifact@v4
+      with:
+          name: main-exe-artifact
+          path: bin
+          # 
+  download:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Download main.exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: main-exe-artifact
+          path: downloaded_bin
+
+      - name: List contents of downloaded_bin directory
+        run: dir downloaded_bin
