@@ -1,4 +1,4 @@
-# Canvas_Quantum_Simulator
+# Canvas Quantum Simulator 
 
 Canvas Quantum Simulator – v2.0 "Spaceship edition" 🚀
 -------------------------------------------------------------

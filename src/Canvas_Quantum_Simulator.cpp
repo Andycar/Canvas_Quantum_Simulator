@@ -74,8 +74,8 @@ int main(){
     r->kids.push_back(new Node{Node::MODEL, Node::MODEL, "CX", {0,1}});
 
     // Build and visualize the circuit
-    // qc.build();
-    // qc.draw();
+    qc.build();
+    qc.draw();
 
     // Print the final state vector
     std::cout << "Final state vector:\n" << qc.getState() << "\n";
