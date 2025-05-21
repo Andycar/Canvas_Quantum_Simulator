@@ -7,18 +7,6 @@ on:
   # pull_request:
   #   branches: [ main ]
 
-# env:
-#   SZ_SFML_ROOT: tmp/QSim
-#   _SFML_PACK_NAME: windows-vc17-64.zip
-#   _SFML_DOWNLOAD_PACK: https://artifacts.sfml-dev.org/by-branch/master/windows-vc17-64.zip
-#   # NOTE: pkg. layout: ./<commit-hash>/[lib|include|...]
-#   _SFML_DOWNLOAD_DIR: tmp
-
-#   # Configuration type to build.
-#   # You can convert this to a build matrix if you need coverage of multiple configuration types.
-#   # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-#   #BUILD_CONFIGURATION: Release
-
 permissions:
   contents: read
 
@@ -33,25 +21,10 @@ jobs:
     - name: Setup MSVC/CLI dev. env.
       uses: ilammy/msvc-dev-cmd@v1.13.0
 
-    # - name: Setup QSim...
-    #   shell: cmd
-    #   run: tooling/QSim_dl+unzip
-
-    # - name: test env
-    #   run: echo "${{ env.SZ_SFML_ROOT }}"
-    
     - name: compile
       run: |
         cl src\*.cpp /O2 /GL /EHsc /std:c++17 /I include/ /link /OUT:bin\main.exe /OPT:REF /OPT:ICF /LTCG /INCREMENTAL:NO /DYNAMICBASE 
     
-    # - name: Copy DLLs
-    #   shell: cmd
-    #   run: |
-    #     mkdir bin 2>NUL
-    #     copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-graphics-3.dll" bin\
-    #     copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-window-3.dll" bin\
-    #     copy "${{ env.SZ_SFML_ROOT }}\bin\sfml-system-3.dll" bin\
-
     - name: Upload main.exe as an artifact
       uses: actions/upload-artifact@v4
       with:

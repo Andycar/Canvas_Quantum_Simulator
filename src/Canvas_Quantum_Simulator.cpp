@@ -23,6 +23,7 @@ using json=nlohmann::json; using namespace Eigen; using cxd=std::complex<double>
 // Model – fundamental building block
 //--------------------------------------------------
 struct Model{ std::string name; size_t arity; MatrixXcd U; json meta;};
+
 class ModelRegistry{
     std::map<std::string,Model> reg;
 public:
