@@ -54,10 +54,31 @@ public:
     Node* addModel(const std::string&name,const std::vector<size_t>&t){auto*n=new Node{Node::MODEL};n->modelName=name;n->targets=t;root->kids.push_back(n);return n;}
     Node* group(){auto*n=new Node{Node::GROUP};root->kids.push_back(n);return n;}
     Node* repeat(size_t k){auto*n=new Node{Node::REPEAT};n->times=k;root->kids.push_back(n);return n;}
-    void build(){for(auto*k:root->kids) compile(k);} void draw()const{for(size_t q=0;q<nq;++q) std::cout<<"q"<<q<<": "<<canvas[q]<<"\n";} }; 
+    void build(){for(auto*k:root->kids) compile(k);} 
+    void draw()const{for(size_t q=0;q<nq;++q) std::cout<<"q"<<q<<": "<<canvas[q]<<"\n";}
+    const VectorXcd& getState() const { return state; }
+}; 
 
 //--------------------------------------------------
-int main(){ ModelRegistry reg; reg.load("h.json"); reg.load("cx.json"); reg.load("rx.json");
+int main(){
+    // Initialize model registry with quantum gates: H, CX, RX gates are defined in JSON files
+    ModelRegistry reg;
+    reg.load("h.json"); //Hadamard gate
+    reg.load("cx.json"); //CNOT gate
+    reg.load("rx.json"); //RX gate
+
+    // Create a quantum circuit with 2 qubits
     QuantumCircuit qc(2,reg);
-    qc.addModel("H",{0}); auto r=qc.repeat(3); r->kids.push_back(new Node{Node::MODEL, Node::MODEL, "CX", {0,1}});
-    qc.build(); qc.draw(); }
+    // Add a Hadamard gate on qubit 0, repeat it 3 times, and add a CNOT gate between qubit 0 and qubit 1
+    qc.addModel("H",{0}); auto r=qc.repeat(3); 
+    r->kids.push_back(new Node{Node::MODEL, Node::MODEL, "CX", {0,1}});
+
+    // Build and visualize the circuit
+    // qc.build();
+    // qc.draw();
+
+    // Print the final state vector
+    std::cout << "Final state vector:\n" << qc.getState() << "\n";
+
+    return 0;
+}
