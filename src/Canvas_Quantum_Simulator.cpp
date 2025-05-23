@@ -39,25 +39,139 @@ struct Node{
 
 //--------------------------------------------------
 // QuantumCircuit v2 – builds from SceneGraph
+// The QuantumCircuit class represents a quantum circuit simulation framework,
+// allowing users to define and manipulate quantum gates, compile operations,
+// and visualize the circuit. It supports functionalities such as tensor product
+// operations, gate expansion, state evolution, hierarchical grouping of operations,
+// and circuit drawing, leveraging a ModelRegistry for gate definitions and a scene
+// graph structure for circuit representation.
 //--------------------------------------------------
-class QuantumCircuit{ size_t nq; VectorXcd state; ModelRegistry& reg; Node* root; std::vector<std::string> canvas;
-    static MatrixXcd kron(const MatrixXcd&a,const MatrixXcd&b){MatrixXcd K(a.rows()*b.rows(),a.cols()*b.cols());for(int i=0;i<a.rows();++i)for(int j=0;j<a.cols();++j)K.block(i*b.rows(),j*b.cols(),b.rows(),b.cols())=a(i,j)*b;return K;}
-    MatrixXcd expand(const MatrixXcd&g,const std::vector<size_t>&t){ size_t dim=1ULL<<nq; MatrixXcd op=MatrixXcd::Zero(dim,dim); size_t k=t.size();
-        for(size_t b=0;b<dim;++b){ size_t ext=0; for(size_t i=0;i<k;++i) ext|=((b>>t[i])&1ULL)<<i; for(size_t tgt=0;tgt<(1ULL<<k);++tgt){ size_t nb=b; for(size_t i=0;i<k;++i){ size_t mask=1ULL<<t[i]; nb=(nb&~mask)|(((tgt>>i)&1ULL)<<t[i]); } op(nb,b)=g(tgt,ext);} }
-        return op; }
-    void apply(const MatrixXcd&op){state=op*state;}
-    void compile(Node* n){ if(n->t==Node::MODEL){const auto& m=reg.get(n->modelName); MatrixXcd mat=m.U; if(m.meta.contains("param")&&m.meta["param"]=="theta") mat=std::cos(n->theta/2)*MatrixXcd::Identity(mat.rows(),mat.cols())-I*std::sin(n->theta/2)*mat; apply(expand(mat,n->targets)); drawGate(m.meta.value("style","??"),n->targets.front());}
-        else if(n->t==Node::REPEAT){ for(size_t i=0;i<n->times;++i) for(auto*k:n->kids) compile(k);} else if(n->t==Node::GROUP){ for(auto*k:n->kids) compile(k);} }
-    void drawGate(const std::string&lbl,size_t qubit){ if(canvas.size()<nq) canvas.resize(nq); size_t c=canvas.empty()?0:canvas[0].size(); for(size_t q=0;q<nq;++q){ if(canvas[q].size()<c+3) canvas[q]+=std::string(c+3-canvas[q].size(),' '); canvas[q].replace(c,3,q==qubit?lbl:"───"); } }
+class QuantumCircuit {
+    size_t nq;
+    VectorXcd state;
+    ModelRegistry& reg;
+    Node* root;
+    std::vector<std::string> canvas;
+
+    static MatrixXcd kron(const MatrixXcd& a, const MatrixXcd& b) {
+        MatrixXcd K(a.rows() * b.rows(), a.cols() * b.cols());
+        for (int i = 0; i < a.rows(); ++i)
+            for (int j = 0; j < a.cols(); ++j)
+                K.block(i * b.rows(), j * b.cols(), b.rows(), b.cols()) = a(i, j) * b;
+        return K;
+    }
+
+    MatrixXcd expand(const MatrixXcd& g, const std::vector<size_t>& t) {
+        size_t dim = 1ULL << nq;
+        MatrixXcd op = MatrixXcd::Zero(dim, dim);
+        size_t k = t.size();
+        for (size_t b = 0; b < dim; ++b) {
+            size_t ext = 0;
+            for (size_t i = 0; i < k; ++i)
+                ext |= ((b >> t[i]) & 1ULL) << i;
+            for (size_t tgt = 0; tgt < (1ULL << k); ++tgt) {
+                size_t nb = b;
+                for (size_t i = 0; i < k; ++i) {
+                    size_t mask = 1ULL << t[i];
+                    nb = (nb & ~mask) | (((tgt >> i) & 1ULL) << t[i]);
+                }
+                op(nb, b) = g(tgt, ext);
+            }
+        }
+        return op;
+    }
+
+    void apply(const MatrixXcd& op) {
+        state = op * state;
+    }
+
+    void compile(Node* n) {
+        if (n->t == Node::MODEL) {
+            if (!reg.exists(n->modelName)) {
+                std::cerr << "Error: Model '" << n->modelName << "' not found in registry.\n";
+                return;
+            }
+            const auto& m = reg.get(n->modelName);
+            MatrixXcd mat = m.U;
+            if (m.meta.contains("param") && m.meta["param"] == "theta") {
+            if (!n->targets.empty()) {
+                drawGate(m.meta.value("style", "??"), n->targets.front());
+            } else {
+                std::cerr << "Error: targets vector is empty for model " << n->modelName << "\n";
+            }
+                    - I * std::sin(n->theta / 2) * mat;
+            }
+            apply(expand(mat, n->targets));
+            drawGate(m.meta.value("style", "??"), n->targets.front());
+        }
+        else if (n->t == Node::REPEAT) {
+            for (size_t i = 0; i < n->times; ++i) {
+                for (auto* k : n->kids) {
+                    compile(k);
+                }
+            }
+        }
+        else if (n->t == Node::GROUP) {
+            for (auto* k : n->kids) {
+                compile(k);
+            }
+        }
+    }
+
+    void drawGate(const std::string& lbl, size_t qubit) {
+        if (canvas.size() < nq)
+            canvas.resize(nq);
+        size_t c = canvas.empty() ? 0 : canvas[0].size();
+        for (size_t q = 0; q < nq; ++q) {
+            if (canvas[q].size() < c + 3)
+                canvas[q] += std::string(c + 3 - canvas[q].size(), ' ');
+            canvas[q].replace(c, 3, q == qubit ? lbl : "───");
+        }
+    }
+
 public:
-    QuantumCircuit(size_t qubits,ModelRegistry&r):nq(qubits),reg(r){state=VectorXcd::Zero(1ULL<<nq);state(0)=1; root=new Node{Node::GROUP};}
-    Node* addModel(const std::string&name,const std::vector<size_t>&t){auto*n=new Node{Node::MODEL};n->modelName=name;n->targets=t;root->kids.push_back(n);return n;}
-    Node* group(){auto*n=new Node{Node::GROUP};root->kids.push_back(n);return n;}
-    Node* repeat(size_t k){auto*n=new Node{Node::REPEAT};n->times=k;root->kids.push_back(n);return n;}
-    void build(){for(auto*k:root->kids) compile(k);} 
-    void draw()const{for(size_t q=0;q<nq;++q) std::cout<<"q"<<q<<": "<<canvas[q]<<"\n";}
-    const VectorXcd& getState() const { return state; }
-}; 
+    QuantumCircuit(size_t qubits, ModelRegistry& r)
+        : nq(qubits), reg(r) {
+        state = VectorXcd::Zero(1ULL << nq);
+        state(0) = 1;
+        root = new Node{ Node::GROUP };
+    }
+
+    Node* addModel(const std::string& name, const std::vector<size_t>& t) {
+        auto* n = new Node{ Node::MODEL };
+        n->modelName = name;
+        n->targets = t;
+        root->kids.push_back(n);
+        return n;
+    }
+
+    Node* group() {
+        auto* n = new Node{ Node::GROUP };
+        root->kids.push_back(n);
+        return n;
+    }
+
+    Node* repeat(size_t k) {
+        auto* n = new Node{ Node::REPEAT };
+        n->times = k;
+        root->kids.push_back(n);
+        return n;
+    }
+
+    void build() {
+        for (auto* k : root->kids)
+            compile(k);
+    }
+
+    void draw() const {
+        for (size_t q = 0; q < nq; ++q)
+            std::cout << "q" << q << ": " << canvas[q] << "\n";
+    }
+
+    const VectorXcd& getState() const {
+        return state;
+    }
+};
 
 //--------------------------------------------------
 int main(){
